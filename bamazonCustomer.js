@@ -1,5 +1,5 @@
 var mysql = require("mysql");
-// var inquirer = require("inquirer");
+var inquirer = require("inquirer");
 var Table = require('cli-table');
 
 
@@ -29,7 +29,7 @@ connection.connect(function (err) {
 function start() {
   connection.query("SELECT * FROM products", function (err, results) {
     if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
+    // once you have the items, prompt the user for which they'd like buys
     // console.log(results);
 
     // instantiate
@@ -37,74 +37,69 @@ function start() {
       head: ['ID', 'Product', 'Department', 'Price', 'Stock #'],
       colWidths: [5, 20, 20, 10, 10]
     });
+    inquirer
+      .prompt([
+        {
+          name: "choice",
+          type: "input",
+          choices: function () {
+            // console.log(results.length);
+            for (var i = 0; i < results.length; i++) {
+              table.push(
+                [results[i].item_id,
+                results[i].product_name,
+                results[i].department_name,
+                parseFloat(results[i].price),
+                results[i].stock_quantity]
+              );
+            }
+            console.log(table.toString());
+          },
+          message: "What item (by ID) would you like to purchase?"
+        },
+        {
+          name: "numberOfItems",
+          type: "input",
+          message: "How many would you like to purchase?"
+        }
+      ])
+      .then(function (answer) {
+        // get the information of the chosen item
+        var chosenItem;
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].item_id === parseInt(answer.choice)) {
+            chosenItem = results[i];
+            // console.log(chosenItem);
+          }
 
-    // var choiceArray = [];
-    for (var i = 0; i < results.length; i++) {
-      table.push(
-        [results[i].item_id,
-        results[i].product_name,
-        results[i].department_name,
-        parseFloat(results[i].price),
-        results[i].stock_quantity]
-      );
-    }
-    console.log(table.toString());
+        }
 
-    // inquirer
-    //   .prompt([
-    //     {
-    //       name: "choice",
-    //       type: "rawlist",
-    //       choices: function() {
-    //         var choiceArray = [];
-    //         for (var i = 0; i < results.length; i++) {
-    //           choiceArray.push(results[i].item_name);
-    //         }
-    //         return choiceArray;
-    //       },
-    //       message: "What item would you like to purchase?"
-    //     },
-    //     {
-    //       name: "bid",
-    //       type: "input",
-    //       message: "How much would you like to bid?"
-    //     }
-    //   ])
-    //   .then(function(answer) {
-    //     // get the information of the chosen item
-    //     var chosenItem;
-    //     for (var i = 0; i < results.length; i++) {
-    //       if (results[i].item_name === answer.choice) {
-    //         chosenItem = results[i];
-    //       }
-    //     }
-
-    //     // determine if bid was high enough
-    //     if (chosenItem.highest_bid < parseInt(answer.bid)) {
-    //       // bid was high enough, so update db, let the user know, and start over
-    //       connection.query(
-    //         "UPDATE auctions SET ? WHERE ?",
-    //         [
-    //           {
-    //             highest_bid: answer.bid
-    //           },
-    //           {
-    //             id: chosenItem.id
-    //           }
-    //         ],
-    //         function(error) {
-    //           if (error) throw err;
-    //           console.log("Bid placed successfully!");
-    //           start();
-    //         }
-    //       );
-    //     }
-    //     else {
-    //       // bid wasn't high enough, so apologize and start over
-    //       console.log("Your bid was too low. Try again...");
-    //       start();
-    //     }
-    //   });
+        // determine if bid was high enough
+        if (chosenItem.stock_quantity >= answer.numberOfItems) {
+          var differenceNum = chosenItem.stock_quantity - answer.numberOfItems;
+          connection.query(
+            "UPDATE products SET ? WHERE ?",
+            [
+              {
+                stock_quantity: differenceNum
+              },
+              {
+                item_id: chosenItem.item_id
+              }
+            ],
+            function (error) {
+              if (error) throw err;
+              console.log("Updated stock amount and purchased " + answer.numberOfItems + " x " + chosenItem.product_name + ".\n"
+              + "Total Cost: $" + chosenItem.price);
+              start();
+            }
+          );
+        }
+        else {
+          console.log("Sorry we don't have enough stock for that order. Please try another number!");
+          start();
+        }
+      });
   });
 
   // inquirer
