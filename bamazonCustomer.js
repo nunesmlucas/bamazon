@@ -49,7 +49,7 @@ function start() {
                 [results[i].item_id,
                 results[i].product_name,
                 results[i].department_name,
-                parseFloat(results[i].price),
+                "$"+ (results[i].price),
                 results[i].stock_quantity]
               );
             }
