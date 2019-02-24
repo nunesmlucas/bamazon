@@ -59,7 +59,7 @@ function start() {
                         addToInventory()
                         break;
                     case "Add New Product":
-                        // showProducts()
+                        addNewProduct()
                         break;
                 }
             });
@@ -162,3 +162,47 @@ function addToInventory() {
 
     });
 };
+
+function addNewProduct() {
+    // prompt for info about the item being put up for auction
+    inquirer
+        .prompt([
+            {
+                name: "productName",
+                type: "input",
+                message: "What product would you like to add? "
+            },
+            {
+                name: "dept",
+                type: "input",
+                message: "Which department would it be placed in?"
+            },
+            {
+                name: "stockAmount",
+                type: "input",
+                message: "How much stock would you like to start with?"
+            },
+            {
+                name: "price",
+                type: "input",
+                message: "How much will the product sell for?"
+            }
+        ])
+        .then(function (answer) {
+            // when finished prompting, insert a new item into the db with that info
+            connection.query(
+                "INSERT INTO products SET ?",
+                {
+                    product_name: answer.productName,
+                    department_name: answer.dept,
+                    price: answer.price,
+                    stock_quantity: answer.stockAmount
+                },
+                function (err) {
+                    if (err) throw err;
+                    console.log("Your product was added successfully!");
+                    start();
+                }
+            );
+        });
+}
