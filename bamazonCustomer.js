@@ -90,7 +90,7 @@ function start() {
             function (error) {
               if (error) throw err;
               console.log("Updated stock amount and purchased " + answer.numberOfItems + " x " + chosenItem.product_name + ".\n"
-              + "Total Cost: $" + chosenItem.price);
+              + "Total Cost: $" + (chosenItem.price * answer.numberOfItems));
               start();
             }
           );
